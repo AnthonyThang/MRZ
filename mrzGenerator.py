@@ -10,7 +10,7 @@ client = MongoClient("mongodb://localhost:27017/")
 db = client["MRZ"]
 
 # Resmi yükleyin ve gri tonlamaya çevirin
-img = cv2.imread(r'C:/Users/Mert/Desktop/Staj/MRZ/passport2.jpg')
+img = cv2.imread(r'C:/Users/Mert/Desktop/Staj/MRZ/visa1.jpg')
 gray = cv2.cvtColor(img, cv2.COLOR_BGR2GRAY)
 
 # OCR işlemi yapın
@@ -129,6 +129,7 @@ for i, line in enumerate(lines):
 
     #Visa MRZ
     elif line.startswith('V'):
+        print("s")
         mrz_block = lines[i:i+2]
         mrz_lines = mrz_block  
 
@@ -177,5 +178,5 @@ for i, line in enumerate(lines):
             "SecondName": second_name
         }
         
-        collection = db["Visa"] 
-
+        collection = db["Visa"]
+        collection.insert_one(document)
