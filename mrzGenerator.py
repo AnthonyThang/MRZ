@@ -129,36 +129,35 @@ for i, line in enumerate(lines):
 
     #Visa MRZ
     elif line.startswith('V'):
-        print("s")
         mrz_block = lines[i:i+2]
         mrz_lines = mrz_block  
 
         country_code = mrz_lines[0][2:5]
 
         visa_number = mrz_lines[1][0:9]
-        visa_check_digit = mrz_lines[1][19]
-
+        visa_check_digit = mrz_lines[1][9]
+       
         nationality = mrz_lines[1][10:13]
         if int(mrz_lines[1][13:15]) > 24:
             birth_date = f"19{mrz_lines[1][13:15]}-{mrz_lines[1][15:17]}-{mrz_lines[1][17:19]}"
         else:
             birth_date = f"20{mrz_lines[1][13:15]}-{mrz_lines[1][15:17]}-{mrz_lines[1][17:19]}"
         
-        birth_check_digit = mrz_lines[0][19]
+        birth_check_digit = mrz_lines[1][19]
 
-        sex = "Erkek" if mrz_lines[0][20] == "M" else "Kadın"
+        sex = "Erkek" if mrz_lines[1][20] == "M" else "Kadın"
 
         if int(mrz_lines[1][21:23]) > 24:
             expiry_date = f"19{mrz_lines[1][21:23]}-{mrz_lines[1][23:25]}-{mrz_lines[1][25:27]}"
         else:
             expiry_date = f"20{mrz_lines[1][21:23]}-{mrz_lines[1][23:25]}-{mrz_lines[1][25:27]}"
-        expiry_check_digit = mrz_lines[0][27]
+        expiry_check_digit = mrz_lines[1][27]
 
         
 
         surname_end = mrz_lines[0].find('<<')
         surname = mrz_lines[0][5:surname_end]
-        name_section = mrz_lines[1][surname_end+2:]
+        name_section = mrz_lines[0][surname_end+2:]
         names = name_section.split('<')
         first_name = names[0] if len(names) > 0 else None
         second_name = names[1] if len(names) > 1 else None
