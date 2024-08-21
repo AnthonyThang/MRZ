@@ -2,7 +2,7 @@ import cv2
 import pytesseract
 from pymongo import MongoClient
 
-# Tesseract'ın sistemdeki kurulu olduğu yolu belirtin
+# Tesseract path
 pytesseract.pytesseract.tesseract_cmd = r'C:\Program Files\Tesseract-OCR\tesseract.exe'
 
 # MongoDB veritabanı bağlantısı/ Database seçimi ve koleksiyon seçimi
@@ -24,11 +24,11 @@ mrz_lines = []
 
 for i, line in enumerate(lines):
     if line.startswith('I'):
-        # Identity card ise 2 satır daha al
+        # 3 rows
         mrz_block = lines[i:i+3]
-        mrz_lines = mrz_block[:3]  # İlk iki satırı ayrı indekslere yerleştir
+        mrz_lines = mrz_block[:3] 
 
-        # Datalar
+        # Datas
         country_code = mrz_lines[0][2:5]
         document_number = mrz_lines[0][5:14]
         check_digit = mrz_lines[0][14]
@@ -64,24 +64,41 @@ for i, line in enumerate(lines):
             "FirstName": first_name,
             "SecondName": second_name
         }
-
-        collection = db["IdentityCard"]  # IdentityCard koleksiyonu
+        #MongoDB Collection for Identity Card
+        collection = db["IdentityCard"]  
+        #Push into collection
         collection.insert_one(document)
 
+
+
+#Passport MRZ
     elif line.startswith('P'):
         # Pasaport MRZ'si ise
         mrz_block = lines[i:i+2]
         mrz_lines = mrz_block  # İlk iki satırı ayrı indekslere yerleştir
 
         country_code = mrz_lines[0][2:5]
+
         passport_number = mrz_lines[1][0:9]
         passport_check_digit = mrz_lines[1][9]
-        birth_date = f"19{mrz_lines[1][13:15]}-{mrz_lines[1][15:17]}-{mrz_lines[1][17:19]}"
-        birth_check_digit = mrz_lines[1][19]
-        sex = "Erkek" if mrz_lines[1][20] == "M" else "Kadın"
-        expiry_date = f"20{mrz_lines[1][21:23]}-{mrz_lines[1][23:25]}-{mrz_lines[1][25:27]}"
-        expiry_check_digit = mrz_lines[1][16]
         nationality = mrz_lines[1][10:13]
+
+        if int(mrz_lines[1][13:15]) > 24:
+            birth_date = f"19{mrz_lines[1][13:15]}-{mrz_lines[1][15:17]}-{mrz_lines[1][17:19]}"
+        else:
+            birth_date = f"20{mrz_lines[1][13:15]}-{mrz_lines[1][15:17]}-{mrz_lines[1][17:19]}"
+        
+        birth_check_digit = mrz_lines[1][19]
+
+        sex = "Erkek" if mrz_lines[1][20] == "M" else "Kadın"
+
+        if int(mrz_lines[1][21:23]) > 24:
+            expiry_date = f"19{mrz_lines[1][21:23]}-{mrz_lines[1][23:25]}-{mrz_lines[1][25:27]}"
+        else:
+            expiry_date = f"20{mrz_lines[1][21:23]}-{mrz_lines[1][23:25]}-{mrz_lines[1][25:27]}"
+        
+        expiry_check_digit = mrz_lines[1][27]
+        
 
 
         surname_end = mrz_lines[0].find('<<')
@@ -105,25 +122,38 @@ for i, line in enumerate(lines):
             "FirstName": first_name,
             "SecondName": second_name
         }
-
+        #Passport collection
         collection = db["Passport"]  # Passport koleksiyonu
         collection.insert_one(document)
 
-    elif line.startswith('V'):
-        # Vize MRZ'si ise
-        mrz_block = lines[i:i+2]
-        mrz_lines = mrz_block  # İlk iki satırı ayrı indekslere yerleştir
 
-        visa_type = mrz_lines[0][0]
+    #Visa MRZ
+    elif line.startswith('V'):
+        mrz_block = lines[i:i+2]
+        mrz_lines = mrz_block  
+
         country_code = mrz_lines[0][2:5]
-        visa_number = mrz_lines[0][5:14]
-        visa_check_digit = mrz_lines[0][14]
-        birth_date = f"19{mrz_lines[0][13:15]}-{mrz_lines[0][15:17]}-{mrz_lines[0][17:19]}"
+
+        visa_number = mrz_lines[1][0:9]
+        visa_check_digit = mrz_lines[1][19]
+
+        nationality = mrz_lines[1][10:13]
+        if int(mrz_lines[1][13:15]) > 24:
+            birth_date = f"19{mrz_lines[1][13:15]}-{mrz_lines[1][15:17]}-{mrz_lines[1][17:19]}"
+        else:
+            birth_date = f"20{mrz_lines[1][13:15]}-{mrz_lines[1][15:17]}-{mrz_lines[1][17:19]}"
+        
         birth_check_digit = mrz_lines[0][19]
+
         sex = "Erkek" if mrz_lines[0][20] == "M" else "Kadın"
-        expiry_date = f"20{mrz_lines[0][21:23]}-{mrz_lines[0][23:25]}-{mrz_lines[0][25:27]}"
+
+        if int(mrz_lines[1][21:23]) > 24:
+            expiry_date = f"19{mrz_lines[1][21:23]}-{mrz_lines[1][23:25]}-{mrz_lines[1][25:27]}"
+        else:
+            expiry_date = f"20{mrz_lines[1][21:23]}-{mrz_lines[1][23:25]}-{mrz_lines[1][25:27]}"
         expiry_check_digit = mrz_lines[0][27]
-        nationality = mrz_lines[0][28:31]
+
+        
 
         surname_end = mrz_lines[0].find('<<')
         surname = mrz_lines[0][5:surname_end]
@@ -133,7 +163,6 @@ for i, line in enumerate(lines):
         second_name = names[1] if len(names) > 1 else None
 
         document = {
-            "VisaType": visa_type,
             "CountryCode": country_code,
             "VisaNumber": visa_number,
             "VisaCheckDigit": visa_check_digit,
