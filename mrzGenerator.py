@@ -5,26 +5,24 @@ from pymongo import MongoClient
 # Tesseract path
 pytesseract.pytesseract.tesseract_cmd = r'C:\Program Files\Tesseract-OCR\tesseract.exe'
 
-# MongoDB veritabanı bağlantısı/ Database seçimi ve koleksiyon seçimi
+# MongoDB database connection
 client = MongoClient("mongodb://localhost:27017/")
 db = client["MRZ"]
 
-# Resmi yükleyin ve gri tonlamaya çevirin
-img = cv2.imread(r'C:/Users/Mert/Desktop/Staj/MRZ/visa1.jpg')
+#File location of Img
+img = cv2.imread(r'**')
 gray = cv2.cvtColor(img, cv2.COLOR_BGR2GRAY)
 
-# OCR işlemi yapın
+# OCR
 text = pytesseract.image_to_string(gray)
-text = text.replace(' ', '')  # Boşlukları kaldır
-# Sonuçları satırlara ayır
+text = text.replace(' ', '')
+#img sonucu lines
 lines = text.splitlines()
-
-# "I", "P" veya "V" ayrımı
 mrz_lines = []
 
 for i, line in enumerate(lines):
+    #Identity Card
     if line.startswith('I'):
-        # 3 rows
         mrz_block = lines[i:i+3]
         mrz_lines = mrz_block[:3] 
 
@@ -33,18 +31,20 @@ for i, line in enumerate(lines):
         document_number = mrz_lines[0][5:14]
         check_digit = mrz_lines[0][14]
         national_id = mrz_lines[0][16:27]
+        
         if int(mrz_lines[1][0:2]) > 24:
             birth_date = f"19{mrz_lines[1][0:2]}-{mrz_lines[1][2:4]}-{mrz_lines[1][4:6]}"
         else:
             birth_date = f"20{mrz_lines[1][0:2]}-{mrz_lines[1][2:4]}-{mrz_lines[1][4:6]}"
+            
         gender = "Erkek" if mrz_lines[1][7] == "M" else "Kadın"
         expiry_date = f"20{mrz_lines[1][8:10]}-{mrz_lines[1][10:12]}-{mrz_lines[1][12:14]}"
         
-        # Soyad
+        # Surname
         surname_end = mrz_lines[2].find('<<')
         surname = mrz_lines[2][0:surname_end]
         
-        # Ad
+        # Name
         name_section = mrz_lines[2][surname_end+2:]
         names = name_section.split('<')
         names = [name for name in names if name]
@@ -64,7 +64,7 @@ for i, line in enumerate(lines):
             "FirstName": first_name,
             "SecondName": second_name
         }
-        #MongoDB Collection for Identity Card
+        #Identity Card collection
         collection = db["IdentityCard"]  
         #Push into collection
         collection.insert_one(document)
@@ -73,9 +73,9 @@ for i, line in enumerate(lines):
 
 #Passport MRZ
     elif line.startswith('P'):
-        # Pasaport MRZ'si ise
+        # Passport MRZ
         mrz_block = lines[i:i+2]
-        mrz_lines = mrz_block  # İlk iki satırı ayrı indekslere yerleştir
+        mrz_lines = mrz_block
 
         country_code = mrz_lines[0][2:5]
 
